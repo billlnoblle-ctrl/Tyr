@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { Media } from "../types.js";
+import type { Comment, Media } from "../types.js";
+import { computeComments } from "./comments.js";
+import { computeContentIdeas } from "./contentIdeas.js";
 import { computeEngagement } from "./engagement.js";
 import { computeGrowth } from "./growth.js";
 import { computePostingPatterns } from "./postingPatterns.js";
@@ -101,4 +103,53 @@ test("computeGrowth summarizes an insight time series", () => {
 test("computeGrowth returns no trends for empty insights", () => {
   const g = computeGrowth([], undefined);
   assert.equal(g.trends.length, 0);
+});
+
+const comments: Comment[] = [
+  { id: "c1", text: "love this", username: "alice", timestamp: "2026-05-01", like_count: 5 },
+  { id: "c2", text: "nice", username: "bob", timestamp: "2026-05-01", like_count: 20 },
+  { id: "c3", text: "again", username: "alice", timestamp: "2026-05-02", like_count: 1 },
+  { id: "c4", text: "no name", timestamp: "2026-05-02", like_count: 0 },
+];
+
+test("computeComments ranks top commenters and most-liked comments", () => {
+  const c = computeComments(comments, 5);
+  assert.equal(c.analyzedComments, 4);
+  assert.equal(c.uniqueCommenters, 2); // alice + bob; blank username ignored
+  assert.equal(c.topCommenters[0].username, "alice");
+  assert.equal(c.topCommenters[0].count, 2);
+  assert.equal(c.mostLiked[0].id, "c2"); // 20 likes is highest
+});
+
+test("computeComments handles an empty list", () => {
+  const c = computeComments([]);
+  assert.equal(c.analyzedComments, 0);
+  assert.equal(c.uniqueCommenters, 0);
+  assert.equal(c.topCommenters.length, 0);
+  assert.equal(c.mostLiked.length, 0);
+});
+
+test("computeContentIdeas derives suggestions from metrics", () => {
+  const e = computeEngagement(media, 1000);
+  const ideas = computeContentIdeas({
+    engagement: e,
+    patterns: computePostingPatterns(e.posts),
+    topContent: computeTopContent(e.posts),
+  });
+  assert.ok(ideas.ideas.length > 0);
+  // REELS is the best format here, so it should be recommended.
+  assert.ok(ideas.ideas.some((s) => s.includes("REELS")));
+  // Best slot (Monday) should be surfaced.
+  assert.ok(ideas.ideas.some((s) => s.includes("Monday")));
+});
+
+test("computeContentIdeas falls back when there is no data", () => {
+  const e = computeEngagement([], undefined);
+  const ideas = computeContentIdeas({
+    engagement: e,
+    patterns: computePostingPatterns(e.posts),
+    topContent: computeTopContent(e.posts),
+  });
+  assert.equal(ideas.ideas.length, 1);
+  assert.ok(ideas.ideas[0].includes("Not enough data"));
 });

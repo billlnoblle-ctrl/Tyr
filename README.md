@@ -19,6 +19,12 @@ manage (a Business or Creator account connected to a Facebook Page).
   per-day breakdown of average engagement.
 - **Top content** — your best/worst performing posts and a comparison of
   performance by media type (Reels vs Feed vs Carousel).
+- **Comments** — pulls comments from your top posts to surface your most
+  active commenters and most-liked comments (read-only; needs the
+  `instagram_manage_comments` scope).
+- **Content ideas** — plain-language, actionable suggestions derived purely
+  from your own metrics (best format, best time, top post themes). No AI or
+  external calls.
 - Text report (default) or `--json` for piping into other tools.
 
 ## Requirements
@@ -47,6 +53,7 @@ cp .env.example .env   # then fill in your credentials
    - `pages_show_list`
    - `pages_read_engagement`
    - `business_management`
+   - `instagram_manage_comments` *(only needed for comment analysis; read-only here)*
 4. Exchange it for a **long-lived token** (valid ~60 days) — see
    [Meta's long-lived token guide](https://developers.facebook.com/docs/instagram-api/guides/access-tokens).
 5. Find your **Instagram Business Account ID** (the numeric IG user id):
@@ -81,11 +88,13 @@ tyr --limit 30
 
 ### Options
 
-| Option            | Description                                         | Default |
-| ----------------- | --------------------------------------------------- | ------- |
-| `-l, --limit <n>` | Number of recent posts to analyze                   | `50`    |
-| `--json`          | Output the raw analysis as JSON instead of a report | off     |
-| `-h, --help`      | Show help                                           |         |
+| Option             | Description                                          | Default |
+| ------------------ | ---------------------------------------------------- | ------- |
+| `-l, --limit <n>`  | Number of recent posts to analyze                    | `50`    |
+| `--comments <n>`   | Pull comments from your top N posts (`0` to disable) | `5`     |
+| `--no-comments`    | Skip comment analysis entirely                       | off     |
+| `--json`           | Output the raw analysis as JSON instead of a report  | off     |
+| `-h, --help`       | Show help                                            |         |
 
 ### Example output
 
@@ -140,6 +149,8 @@ src/
     growth.ts           Account insight trends (reach, followers, ...)
     postingPatterns.ts  Best day/hour, frequency
     topContent.ts       Post ranking + per-media-type breakdown
+    comments.ts         Top commenters + most-liked comments
+    contentIdeas.ts     Rule-based suggestions from your own metrics
     metrics.test.ts     Unit tests for the metric functions
 ```
 

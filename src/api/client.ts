@@ -1,5 +1,5 @@
 import type { Config } from "../config.js";
-import type { Account, InsightMetric, Media } from "../types.js";
+import type { Account, Comment, InsightMetric, Media } from "../types.js";
 
 interface GraphError {
   error?: {
@@ -82,6 +82,29 @@ export class InstagramClient {
     }
 
     return collected.slice(0, limit);
+  }
+
+  /**
+   * Fetch up to `limit` comments for a single media item (one page).
+   * Requires the `instagram_manage_comments` permission. On failure (e.g. the
+   * token lacks that scope) a warning is logged and an empty list is returned,
+   * so the rest of the report can still render. Read-only: never replies,
+   * hides, or deletes.
+   */
+  async getComments(mediaId: string, limit = 25): Promise<Comment[]> {
+    try {
+      const res = await this.get<{ data: Comment[] }>(`${mediaId}/comments`, {
+        fields: "id,text,username,timestamp,like_count",
+        limit: Math.min(limit, 50),
+      });
+      return res.data.map((c) => ({ ...c, mediaId }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `Warning: could not fetch comments for media ${mediaId} — ${message}`,
+      );
+      return [];
+    }
   }
 
   /**

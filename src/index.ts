@@ -5,12 +5,13 @@ import { renderReport } from "./report.js";
 
 interface CliArgs {
   limit: number;
+  commentPosts: number;
   json: boolean;
   help: boolean;
 }
 
 function parseArgs(argv: string[]): CliArgs {
-  const args: CliArgs = { limit: 50, json: false, help: false };
+  const args: CliArgs = { limit: 50, commentPosts: 5, json: false, help: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
@@ -30,6 +31,19 @@ function parseArgs(argv: string[]): CliArgs {
         args.limit = Math.floor(value);
         break;
       }
+      case "--comments": {
+        const value = Number(argv[++i]);
+        if (!Number.isFinite(value) || value < 0) {
+          throw new Error(
+            `--comments expects a non-negative number, got "${argv[i]}"`,
+          );
+        }
+        args.commentPosts = Math.floor(value);
+        break;
+      }
+      case "--no-comments":
+        args.commentPosts = 0;
+        break;
       default:
         throw new Error(`Unknown argument: ${arg}`);
     }
@@ -43,12 +57,15 @@ Usage:
   tyr [options]
 
 Options:
-  -l, --limit <n>   Number of recent posts to analyze (default: 50)
-      --json        Output raw analysis as JSON instead of a text report
-  -h, --help        Show this help
+  -l, --limit <n>     Number of recent posts to analyze (default: 50)
+      --comments <n>  Pull comments from your top N posts (default: 5, 0 to skip)
+      --no-comments   Skip comment analysis entirely
+      --json          Output raw analysis as JSON instead of a text report
+  -h, --help          Show this help
 
 Configuration:
   Requires IG_ACCESS_TOKEN and IG_USER_ID (see .env.example / README.md).
+  Comment analysis additionally needs the instagram_manage_comments scope.
 `;
 
 async function main(): Promise<void> {
@@ -67,7 +84,10 @@ async function main(): Promise<void> {
   }
 
   const config = loadConfig();
-  const analysis = await analyzeAccount(config, { limit: args.limit });
+  const analysis = await analyzeAccount(config, {
+    limit: args.limit,
+    commentPosts: args.commentPosts,
+  });
 
   if (args.json) {
     console.log(JSON.stringify(analysis, null, 2));
