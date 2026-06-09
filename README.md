@@ -96,6 +96,7 @@ tyr --limit 30
 | `-l, --limit <n>`  | Number of recent posts to analyze                    | `50`    |
 | `--comments <n>`   | Pull comments from your top N posts (`0` to disable) | `5`     |
 | `--no-comments`    | Skip comment analysis entirely                       | off     |
+| `--ads-only`       | Show only the "best posts to advertise" picks        | off     |
 | `--json`           | Output the raw analysis as JSON instead of a report  | off     |
 | `-h, --help`       | Show help                                            |         |
 

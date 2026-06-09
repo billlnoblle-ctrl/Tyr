@@ -138,6 +138,23 @@ export function renderReport(a: Analysis): string {
   }
 
   // Ad candidates — best posts to promote
+  L.push(...adCandidatesLines(a));
+  L.push("");
+
+  // Content ideas
+  L.push("── Content Ideas ─────────────────────────────────────────");
+  a.contentIdeas.ideas.forEach((idea, i) => {
+    L.push(`  ${i + 1}. ${idea}`);
+  });
+  L.push("");
+  L.push("=".repeat(60));
+
+  return L.join("\n");
+}
+
+/** Render the "Best Posts to Advertise" section as lines (shared). */
+function adCandidatesLines(a: Analysis): string[] {
+  const L: string[] = [];
   const ac = a.adCandidates.candidates;
   L.push("── Best Posts to Advertise ───────────────────────────────");
   if (ac.length === 0) {
@@ -152,16 +169,20 @@ export function renderReport(a: Analysis): string {
       if (c.permalink) L.push(`     ${c.permalink}`);
     });
   }
-  L.push("");
+  return L;
+}
 
-  // Content ideas
-  L.push("── Content Ideas ─────────────────────────────────────────");
-  a.contentIdeas.ideas.forEach((idea, i) => {
-    L.push(`  ${i + 1}. ${idea}`);
-  });
+/** Render only the ad-candidate recommendations (for `--ads-only`). */
+export function renderAdCandidates(a: Analysis): string {
+  const { account: acc } = a;
+  const L: string[] = [];
+  L.push("=".repeat(60));
+  L.push(`  Ad candidates — @${acc.username}${acc.name ? ` (${acc.name})` : ""}`);
+  L.push("=".repeat(60));
+  L.push("");
+  L.push(...adCandidatesLines(a));
   L.push("");
   L.push("=".repeat(60));
-
   return L.join("\n");
 }
 
