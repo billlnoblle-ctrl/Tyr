@@ -1,4 +1,5 @@
 import type { Account } from "./types.js";
+import type { AdCandidates } from "./metrics/adCandidates.js";
 import type { CommentsSummary } from "./metrics/comments.js";
 import type { ContentIdeas } from "./metrics/contentIdeas.js";
 import type { EngagementSummary } from "./metrics/engagement.js";
@@ -14,6 +15,7 @@ export interface Analysis {
   topContent: TopContent;
   /** Present only when comment analysis was enabled and permitted. */
   comments?: CommentsSummary;
+  adCandidates: AdCandidates;
   contentIdeas: ContentIdeas;
   analyzedPosts: number;
 }
@@ -134,6 +136,23 @@ export function renderReport(a: Analysis): string {
     }
     L.push("");
   }
+
+  // Ad candidates — best posts to promote
+  const ac = a.adCandidates.candidates;
+  L.push("── Best Posts to Advertise ───────────────────────────────");
+  if (ac.length === 0) {
+    L.push("No standout posts yet — analyze more content to find ad candidates.");
+  } else {
+    L.push('Promote these proven performers (Ads Manager → "Use existing post"):');
+    ac.forEach((c, i) => {
+      L.push(
+        `  ${i + 1}. ${int(c.interactions)} interactions — ${truncate(c.caption ?? "")}`,
+      );
+      L.push(`     why: ${c.reason}`);
+      if (c.permalink) L.push(`     ${c.permalink}`);
+    });
+  }
+  L.push("");
 
   // Content ideas
   L.push("── Content Ideas ─────────────────────────────────────────");

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Comment, Media } from "../types.js";
+import { computeAdCandidates } from "./adCandidates.js";
 import { computeComments } from "./comments.js";
 import { computeContentIdeas } from "./contentIdeas.js";
 import { computeEngagement } from "./engagement.js";
@@ -152,4 +153,21 @@ test("computeContentIdeas falls back when there is no data", () => {
   });
   assert.equal(ideas.ideas.length, 1);
   assert.ok(ideas.ideas[0].includes("Not enough data"));
+});
+
+test("computeAdCandidates flags above-average posts, best first", () => {
+  const e = computeEngagement(media, 1000);
+  const tc = computeTopContent(e.posts);
+  const ac = computeAdCandidates(e.posts, tc.byMediaType);
+  // post 2 (the REELS) is the strongest performer and should rank first.
+  assert.equal(ac.candidates[0].id, "2");
+  // Every recommended post must be at or above average interactions.
+  assert.ok(ac.candidates.every((c) => c.vsAverage >= 1));
+  // The reason should mention it beats the average.
+  assert.ok(ac.candidates[0].reason.includes("average"));
+});
+
+test("computeAdCandidates returns nothing for an empty account", () => {
+  const ac = computeAdCandidates([], []);
+  assert.equal(ac.candidates.length, 0);
 });

@@ -25,6 +25,9 @@ manage (a Business or Creator account connected to a Facebook Page).
 - **Content ideas** — plain-language, actionable suggestions derived purely
   from your own metrics (best format, best time, top post themes). No AI or
   external calls.
+- **Best posts to advertise** — flags the posts most worth boosting (proven
+  over-performers in your strongest format), with a reason for each, so you can
+  promote winners via Ads Manager → "Use existing post."
 - Text report (default) or `--json` for piping into other tools.
 
 ## Requirements
@@ -151,6 +154,7 @@ src/
     topContent.ts       Post ranking + per-media-type breakdown
     comments.ts         Top commenters + most-liked comments
     contentIdeas.ts     Rule-based suggestions from your own metrics
+    adCandidates.ts     Flags your best posts to promote as ads
     metrics.test.ts     Unit tests for the metric functions
 ```
 

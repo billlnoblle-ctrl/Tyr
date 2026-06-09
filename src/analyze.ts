@@ -1,5 +1,6 @@
 import { InstagramClient } from "./api/client.js";
 import type { Config } from "./config.js";
+import { computeAdCandidates } from "./metrics/adCandidates.js";
 import { computeComments } from "./metrics/comments.js";
 import { computeContentIdeas } from "./metrics/contentIdeas.js";
 import { computeEngagement } from "./metrics/engagement.js";
@@ -48,6 +49,11 @@ export async function analyzeAccount(
     comments = computeComments(all);
   }
 
+  const adCandidates = computeAdCandidates(
+    engagement.posts,
+    topContent.byMediaType,
+  );
+
   const contentIdeas = computeContentIdeas({
     engagement,
     patterns,
@@ -62,6 +68,7 @@ export async function analyzeAccount(
     patterns,
     topContent,
     comments,
+    adCandidates,
     contentIdeas,
     analyzedPosts: media.length,
   };
