@@ -14,6 +14,18 @@ export interface Media {
   comments_count?: number;
 }
 
+/** A single comment on a piece of media, as returned by the Graph API. */
+export interface Comment {
+  id: string;
+  text?: string;
+  username?: string;
+  timestamp: string; // ISO 8601
+  like_count?: number;
+  /** The media this comment belongs to (populated by the client, not the API). */
+  mediaId?: string;
+  mediaPermalink?: string;
+}
+
 /** Account-level profile fields. */
 export interface Account {
   id: string;

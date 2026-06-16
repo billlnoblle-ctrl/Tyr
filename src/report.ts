@@ -1,4 +1,7 @@
 import type { Account } from "./types.js";
+import type { AdCandidates } from "./metrics/adCandidates.js";
+import type { CommentsSummary } from "./metrics/comments.js";
+import type { ContentIdeas } from "./metrics/contentIdeas.js";
 import type { EngagementSummary } from "./metrics/engagement.js";
 import type { GrowthSummary } from "./metrics/growth.js";
 import type { PostingPatterns } from "./metrics/postingPatterns.js";
@@ -10,6 +13,10 @@ export interface Analysis {
   growth: GrowthSummary;
   patterns: PostingPatterns;
   topContent: TopContent;
+  /** Present only when comment analysis was enabled and permitted. */
+  comments?: CommentsSummary;
+  adCandidates: AdCandidates;
+  contentIdeas: ContentIdeas;
   analyzedPosts: number;
 }
 
@@ -103,8 +110,79 @@ export function renderReport(a: Analysis): string {
     );
   }
   L.push("");
+
+  // Comments (optional)
+  if (a.comments) {
+    const c = a.comments;
+    L.push("── Comments ──────────────────────────────────────────────");
+    L.push(
+      `Analyzed ${int(c.analyzedComments)} comments from your top posts ` +
+        `(${int(c.uniqueCommenters)} unique commenters).`,
+    );
+    if (c.topCommenters.length > 0) {
+      L.push("Most active commenters:");
+      c.topCommenters.forEach((u, i) => {
+        L.push(`  ${i + 1}. @${u.username} (${int(u.count)} comments)`);
+      });
+    }
+    if (c.mostLiked.length > 0 && c.mostLiked[0].like_count) {
+      L.push("Most-liked comments:");
+      c.mostLiked.forEach((cm) => {
+        if (!cm.like_count) return;
+        L.push(
+          `  ${int(cm.like_count)}❤ @${cm.username ?? "?"}: ${truncate(cm.text, 60)}`,
+        );
+      });
+    }
+    L.push("");
+  }
+
+  // Ad candidates — best posts to promote
+  L.push(...adCandidatesLines(a));
+  L.push("");
+
+  // Content ideas
+  L.push("── Content Ideas ─────────────────────────────────────────");
+  a.contentIdeas.ideas.forEach((idea, i) => {
+    L.push(`  ${i + 1}. ${idea}`);
+  });
+  L.push("");
   L.push("=".repeat(60));
 
+  return L.join("\n");
+}
+
+/** Render the "Best Posts to Advertise" section as lines (shared). */
+function adCandidatesLines(a: Analysis): string[] {
+  const L: string[] = [];
+  const ac = a.adCandidates.candidates;
+  L.push("── Best Posts to Advertise ───────────────────────────────");
+  if (ac.length === 0) {
+    L.push("No standout posts yet — analyze more content to find ad candidates.");
+  } else {
+    L.push('Promote these proven performers (Ads Manager → "Use existing post"):');
+    ac.forEach((c, i) => {
+      L.push(
+        `  ${i + 1}. ${int(c.interactions)} interactions — ${truncate(c.caption ?? "")}`,
+      );
+      L.push(`     why: ${c.reason}`);
+      if (c.permalink) L.push(`     ${c.permalink}`);
+    });
+  }
+  return L;
+}
+
+/** Render only the ad-candidate recommendations (for `--ads-only`). */
+export function renderAdCandidates(a: Analysis): string {
+  const { account: acc } = a;
+  const L: string[] = [];
+  L.push("=".repeat(60));
+  L.push(`  Ad candidates — @${acc.username}${acc.name ? ` (${acc.name})` : ""}`);
+  L.push("=".repeat(60));
+  L.push("");
+  L.push(...adCandidatesLines(a));
+  L.push("");
+  L.push("=".repeat(60));
   return L.join("\n");
 }
 
